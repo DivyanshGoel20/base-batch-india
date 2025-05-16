@@ -80,7 +80,7 @@ export default function App() {
         <main className="flex-1">
           {activeTab === "home" && <Home setActiveTab={setActiveTab} streak={streak} />}
           {activeTab === "features" && <Features setActiveTab={setActiveTab} />}
-          {activeTab === "daily-quiz" && <DailyQuiz onBack={() => setActiveTab("home")} />}
+          {activeTab === "daily-quiz" && userFid && <DailyQuiz onBack={() => setActiveTab("home")} userFid={userFid}/>}
           {activeTab === "quiz-creator" && userFid && <QuizCreator onBack={() => setActiveTab("home")} userFid={userFid} />}
           {activeTab === "leaderboard" && <Leaderboard onBack={() => setActiveTab("home")} />}
           {activeTab === "my-quizzes" && userFid && <MyQuizzes onBack={() => setActiveTab("home")} userFid={userFid} />}

@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 const DAILY_QUIZ_KEY = "daily_quiz_last_completed_at";
 const QUIZ_LENGTH = 5;
-const QUESTION_TIME = 15; // seconds
+const QUESTION_TIME = 10; // seconds
 
 
 
@@ -28,6 +28,29 @@ function getISTDateString(): string {
 }
 
 // Fetch daily questions from API or database
+function shuffleArray<T>(array: T[], seed: number): T[] {
+  // Seeded shuffle using Fisher-Yates
+  let arr = array.slice();
+  let m = arr.length, t: T, i: number;
+  let random = mulberry32(seed);
+  while (m) {
+    i = Math.floor(random() * m--);
+    t = arr[m];
+    arr[m] = arr[i];
+    arr[i] = t;
+  }
+  return arr;
+}
+// Seeded random generator
+function mulberry32(a: number): () => number {
+  return function() {
+    var t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
 async function fetchDailyQuestions() {
   // Use a fixed seed for the day to ensure everyone gets the same random questions
   const today = getISTDateString();
@@ -37,17 +60,18 @@ async function fetchDailyQuestions() {
   try {
     const resp = await fetch('https://the-trivia-api.com/v2/questions?limit=5' + seedParam);
     const data = await resp.json();
-    // Don't sort or shuffle - use exactly what the API returned with our seed
-    const questions = (data.slice(0, QUIZ_LENGTH) as TriviaApiQuestion[]).map((q) => {
-      // Create a fixed order of options (correct answer always first)
-      const options = [q.correctAnswer, ...q.incorrectAnswers];
+    // Shuffle options for each question with a deterministic seed
+    return (data.slice(0, QUIZ_LENGTH) as TriviaApiQuestion[]).map((q, idx) => {
+      const allOptions = [q.correctAnswer, ...q.incorrectAnswers];
+      // Use a different seed per question for shuffle
+      const shuffled = shuffleArray(allOptions, daySeed + idx);
+      const answer = shuffled.findIndex(opt => opt === q.correctAnswer);
       return {
         text: q.question.text,
-        options: options,
-        answer: 0, // Correct answer is always first in our array
+        options: shuffled,
+        answer,
       };
     });
-    return questions;
   } catch (e) {
     console.error("Failed to fetch quiz questions:", e);
     return null;
@@ -56,12 +80,22 @@ async function fetchDailyQuestions() {
 
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function DailyQuiz({ onBack }: { onBack: () => void }) {
+import { supabase } from "../lib/supabaseClient";
+
+interface DailyQuizProps {
+  onBack: () => void;
+  userFid: number;
+}
+
+export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
     // State for questions and loading
   const [questions, setQuestions] = useState<Array<{text: string; options: string[]; answer: number}>|null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [lockedUntil, setLockedUntil] = useState<number|null>(null);
+  const [streak, setStreak] = useState<number>(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string|null>(null);
 
   // Helper to load questions
   async function loadQuestions() {
@@ -81,19 +115,45 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   }
 
   // On mount, check if locked, else load questions
+  // On mount, fetch streak and last completed from Supabase
   useEffect(() => {
-    const lastCompleted = localStorage.getItem(DAILY_QUIZ_KEY);
-    if (lastCompleted) {
-      const last = parseInt(lastCompleted, 10);
-      const now = Date.now();
-      if (now - last < 24 * 60 * 60 * 1000) {
-        setLockedUntil(last + 24 * 60 * 60 * 1000);
-        setLoading(false);
-        return;
+    async function fetchStats() {
+      setStatsLoading(true);
+      setStatsError(null);
+      try {
+        const { data, error } = await supabase
+          .from('daily_quiz_user_stats')
+          .select('*')
+          .eq('user_fid', userFid)
+          .single();
+        if (error && error.code !== 'PGRST116') { // Not found is ok
+          setStatsError('Failed to load quiz stats');
+          setStatsLoading(false);
+          setLoading(false);
+          return;
+        }
+        if (data) {
+          setStreak(data.streak || 0);
+          if (data.last_completed_at) {
+            const last = new Date(data.last_completed_at).getTime();
+            const now = Date.now();
+            if (now - last < 24 * 60 * 60 * 1000) {
+              setLockedUntil(last + 24 * 60 * 60 * 1000);
+              setLoading(false);
+              setStatsLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        setStatsError('Failed to load quiz stats');
       }
+      setStatsLoading(false);
+      loadQuestions();
     }
-    loadQuestions();
-  }, []);
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userFid]);
 
   const [step, setStep] = useState<"quiz"|"done"|"locked"|"error">("quiz");
   const [current, setCurrent] = useState(0);
@@ -139,9 +199,40 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
         setStep('done');
         setSelected(null);
         setTimer(0);
-        // Lock quiz for 24 hours
-        localStorage.setItem(DAILY_QUIZ_KEY, Date.now().toString());
-        setLockedUntil(Date.now() + 24 * 60 * 60 * 1000);
+        // Lock quiz for 24 hours and update streak in Supabase
+        (async () => {
+          try {
+            // Fetch current stats
+            const { data, error } = await supabase
+              .from('daily_quiz_user_stats')
+              .select('*')
+              .eq('user_fid', userFid)
+              .single();
+            let newStreak = 1;
+            const now = new Date();
+            if (data) {
+              const last = new Date(data.last_completed_at).getTime();
+              // If last completed was more than 48 hours ago, reset streak
+              if (Date.now() - last > 48 * 60 * 60 * 1000) {
+                newStreak = 1;
+              } else {
+                newStreak = (data.streak || 0) + 1;
+              }
+            }
+            // Upsert
+            await supabase.from('daily_quiz_user_stats').upsert([
+  {
+    user_fid: userFid,
+    last_completed_at: now.toISOString(),
+    streak: newStreak,
+  }
+], { onConflict: 'user_fid' });
+            setStreak(newStreak);
+            setLockedUntil(Date.now() + 24 * 60 * 60 * 1000);
+          } catch (err) {
+            setStatsError('Failed to update quiz stats');
+          }
+        })();
       }
     }, 1200);
   }
@@ -161,11 +252,14 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   // Main component return
   return (
     <Card title="Daily Quiz">
+      {statsLoading && <div className="text-center text-[var(--app-foreground-muted)]">Loading quiz stats...</div>}
+      {statsError && <div className="text-center text-red-500">{statsError}</div>}
       {loading && <div className="text-center text-[var(--app-foreground-muted)]">Loading...</div>}
       {error && <div className="text-center text-red-500">Failed to load questions. <Button onClick={handleRetry}>Retry</Button></div>}
       {!loading && lockedUntil && Date.now() < lockedUntil && (
         <div className="text-center">
-          <div className="mb-2 text-[var(--app-foreground-muted)]">{'You have already completed today\'s Daily Quiz!'}</div>
+          <div className="mb-2 text-[var(--app-foreground-muted)]">You have already completed today's Daily Quiz!</div>
+          <div className="mb-2 text-lg">🔥 Current Streak: <span className="font-bold">{streak}</span></div>
           <div className="mb-4 text-sm">Come back in {Math.ceil((lockedUntil - Date.now())/1000/60/60)} hour(s) to play again.</div>
           <Button variant="primary" onClick={onBack}>Back to Home</Button>
         </div>
