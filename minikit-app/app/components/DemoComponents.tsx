@@ -104,6 +104,7 @@ type FeaturesProps = {
   setActiveTab: (tab: string) => void;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Features({ setActiveTab }: FeaturesProps) {
   return (
     <div className="space-y-6 animate-fadein">
@@ -209,6 +210,7 @@ export function Home({ setActiveTab, streak = 0 }: HomeProps & { streak?: number
 }
 
 // Local demo for tab switching if setActiveTab is not passed as a prop
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function DemoTabSwitcher() {
   const [activeTab, setActiveTab] = useState("leaderboard");
   return (

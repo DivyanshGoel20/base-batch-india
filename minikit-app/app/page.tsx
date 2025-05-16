@@ -4,10 +4,11 @@ import {
   useMiniKit
 } from "@coinbase/onchainkit/minikit";
 
-// ig
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Home, Features } from "./components/DemoComponents";
 import Leaderboard from "./components/Leaderboard";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Icon, Button } from "./components/DemoComponents";
 import DailyQuiz from "./components/DailyQuiz";
 import QuizCreator from "./components/QuizCreator";
