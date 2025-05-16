@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabaseClient";
 interface Quiz {
   id: string;
   title: string;
-  questions: any[];
+  questions: any[]; // Replace 'any' with a proper Question type if available
   created_at: string;
 }
 
@@ -56,7 +56,7 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
         if (!intErr && intData) {
           const intMap: {[quizId: string]: UserQuizInteraction} = {};
           intData.forEach((int: any) => {
-            intMap[int.quiz_id] = int;
+            intMap[int.quiz_id] = int as UserQuizInteraction;
           });
           setInteractions(intMap);
         }
@@ -64,7 +64,7 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [userFid]);
 
   async function toggleHeart(quizId: string) {
     const current = interactions[quizId]?.hearted || false;
@@ -145,7 +145,10 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
               <div className="font-semibold mb-1 text-[var(--app-foreground)]">Q{i+1}: {q.text}</div>
               {q.media && (
                 <div className="mb-2">
-                  {q.media.startsWith("data:image/") && <img src={q.media} alt="media" className="w-full max-h-32 object-contain rounded" />}
+                  {/* Consider using <Image> from 'next/image' for optimization */}
+                  {q.media.startsWith("data:image/") && (
+                    <img src={q.media} alt="media" className="w-full max-h-32 object-contain rounded" />
+                  )}
                   {q.media.startsWith("data:audio/") && <audio controls src={q.media} className="w-full" />}
                   {q.media.startsWith("data:video/") && <video controls src={q.media} className="w-full max-h-32 rounded" />}
                 </div>

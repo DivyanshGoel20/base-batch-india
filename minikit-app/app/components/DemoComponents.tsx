@@ -12,10 +12,9 @@ import {
   TransactionError,
   TransactionResponse,
   TransactionStatusAction,
-  TransactionStatusLabel,
-  TransactionStatus,
+
 } from "@coinbase/onchainkit/transaction";
-import { useNotification } from "@coinbase/onchainkit/minikit";
+
 
 type ButtonProps = {
   children: ReactNode;
@@ -344,7 +343,7 @@ type Todo = {
   completed: boolean;
 }
 
-function TodoList() {
+
   const [todos, setTodos] = useState<Todo[]>([
     { id: 1, text: "Learn about MiniKit", completed: false },
     { id: 2, text: "Build a Mini App", completed: true },

@@ -23,7 +23,7 @@ export default function App() {
   const [userFid, setUserFid] = useState<number | null>(null);
 
   const addFrame = useAddFrame();
-  const openUrl = useOpenUrl();
+
 
   useEffect(() => {
     if (!isFrameReady) {
@@ -40,7 +40,7 @@ export default function App() {
         } else {
           setUserFid(null);
         }
-      } catch (err) {
+      } catch {
         setUserFid(null);
       }
     }
