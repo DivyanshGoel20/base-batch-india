@@ -35,6 +35,13 @@ function isAfterDailyResetIST() {
 // Global variable to cache fetched questions (shared across browser tabs)
 // GLOBAL_CACHE_KEY removed: no cache in localStorage
 
+// Type for question returned by the trivia API
+interface TriviaApiQuestion {
+  correctAnswer: string;
+  incorrectAnswers: string[];
+  question: { text: string };
+}
+
 // Fetch daily questions from API or database
 async function fetchDailyQuestions() {
   // Use a fixed seed for the day to ensure everyone gets the same random questions
@@ -46,7 +53,7 @@ async function fetchDailyQuestions() {
     const resp = await fetch('https://the-trivia-api.com/v2/questions?limit=5' + seedParam);
     const data = await resp.json();
     // Don't sort or shuffle - use exactly what the API returned with our seed
-    const questions = data.slice(0, QUIZ_LENGTH).map((q: any) => {
+    const questions = (data.slice(0, QUIZ_LENGTH) as TriviaApiQuestion[]).map((q) => {
       // Create a fixed order of options (correct answer always first)
       const options = [q.correctAnswer, ...q.incorrectAnswers];
       return {
