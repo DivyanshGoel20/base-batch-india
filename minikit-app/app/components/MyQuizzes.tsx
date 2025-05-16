@@ -33,46 +33,77 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selected, setSelected] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [interactions, setInteractions] = useState<{[quizId: string]: UserQuizInteraction}>({});
 
   // Fetch quizzes and user interactions on mount
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      // 1. Fetch quizzes created by this user
-      // Debug: Log userFid and its type before querying
-      console.log('Fetching quizzes with creator_fid:', userFid, typeof userFid);
-      const { data: quizData, error: quizErr } = await supabase
-        .from('quizzes')
-        .select('*')
-        .eq('creator_fid', userFid) // Ensure userFid is a number everywhere
-        .order('created_at', { ascending: false });
-      if (quizErr) {
-        setQuizzes([]);
-        setLoading(false);
-        return;
-      }
-      setQuizzes(quizData || []);
+      setError(null);
+      
+      try {
+        // Convert userFid to number to ensure type consistency
+        const userFidNumber = Number(userFid);
+        
+        // Log the value being used for debugging
+        console.log('Fetching quizzes with creator_fid:', userFidNumber, typeof userFidNumber);
+        
+        // 1. Fetch quizzes created by this user
+        const { data: quizData, error: quizErr } = await supabase
+          .from('quizzes')
+          .select('*')
+          .eq('creator_fid', userFidNumber)
+          .order('created_at', { ascending: false });
+        
+        // Log raw results for debugging
+        console.log('Query results:', quizData);
+        
+        if (quizErr) {
+          console.error('Error fetching quizzes:', quizErr);
+          setError(`Failed to load quizzes: ${quizErr.message}`);
+          setQuizzes([]);
+          setLoading(false);
+          return;
+        }
+        
+        if (!quizData || quizData.length === 0) {
+          console.log('No quizzes found for this user');
+          setQuizzes([]);
+          setLoading(false);
+          return;
+        }
+        
+        setQuizzes(quizData);
 
-      // 2. Fetch user interactions for these quizzes
-      if (quizData && quizData.length > 0) {
+        // 2. Fetch user interactions for these quizzes
         const quizIds = quizData.map((q: Quiz) => q.id);
         const { data: intData, error: intErr } = await supabase
           .from('user_quiz_interactions')
           .select('*')
-          .eq('user_fid', userFid)
+          .eq('user_fid', userFidNumber)
           .in('quiz_id', quizIds);
-        if (!intErr && intData) {
+          
+        if (intErr) {
+          console.error('Error fetching interactions:', intErr);
+        } else if (intData) {
           const intMap: {[quizId: string]: UserQuizInteraction} = {};
           intData.forEach((int: UserQuizInteraction) => {
             intMap[int.quiz_id] = int;
           });
           setInteractions(intMap);
         }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        setError('An unexpected error occurred');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
-    fetchData();
+    
+    if (userFid) {
+      fetchData();
+    }
   }, [userFid]);
 
   async function toggleHeart(quizId: string) {
@@ -118,6 +149,15 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
     return (
       <Card title="My Quizzes">
         <div className="text-center text-[var(--app-foreground-muted)]">Loading...</div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card title="My Quizzes">
+        <div className="text-center text-red-500 mb-4">{error}</div>
+        <Button variant="primary" onClick={onBack}>Back to Home</Button>
       </Card>
     );
   }
@@ -182,7 +222,9 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
   return (
     <Card title="My Quizzes">
       {quizzes.length === 0 ? (
-        <div className="text-center text-[var(--app-foreground-muted)]">No quizzes created yet.</div>
+        <div className="text-center text-[var(--app-foreground-muted)]">
+          No quizzes created yet. Create a quiz to see it here.
+        </div>
       ) : (
         <ul className="space-y-3 mb-6">
           {quizzes.map((quiz) => (
