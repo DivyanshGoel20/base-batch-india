@@ -50,15 +50,13 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
         console.log('Fetching quizzes with creator_fid:', userFidNumber, typeof userFidNumber);
         
         // 1. Fetch quizzes created by this user
+        // Force string comparison for creator_fid to avoid type mismatch
         const { data: quizData, error: quizErr } = await supabase
           .from('quizzes')
           .select('*')
-          .eq('creator_fid', userFidNumber)
+          .eq('creator_fid', userFid.toString())
           .order('created_at', { ascending: false });
-        
-        // Log raw results for debugging
-        console.log('Query results:', quizData);
-        
+
         if (quizErr) {
           console.error('Error fetching quizzes:', quizErr);
           setError(`Failed to load quizzes: ${quizErr.message}`);
@@ -68,13 +66,17 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
         }
         
         if (!quizData || quizData.length === 0) {
-          console.log('No quizzes found for this user');
           setQuizzes([]);
           setLoading(false);
           return;
         }
-        
-        setQuizzes(quizData);
+
+        // Parse questions field if it's a string
+        const parsedQuizzes = quizData.map((quiz: any) => ({
+          ...quiz,
+          questions: typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions,
+        }));
+        setQuizzes(parsedQuizzes);
 
         // 2. Fetch user interactions for these quizzes
         const quizIds = quizData.map((q: Quiz) => q.id);
