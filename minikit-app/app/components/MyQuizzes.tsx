@@ -76,7 +76,7 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
         const parsedQuizzes = quizData.map((quiz: unknown) => {
           const q = quiz as {
             questions: string | object;
-            [key: string]: any;
+            [key: string]: unknown;
           };
         
           return {
