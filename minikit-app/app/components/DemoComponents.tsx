@@ -43,14 +43,21 @@ export function Button({
 
   const variantClasses = {
     primary:
-      "bg-[var(--app-accent)] hover:bg-[var(--app-accent-hover)] text-[var(--app-background)]",
+      "bg-gradient-to-r from-[#ff4e50] via-[#f9d423] to-[#24c6dc] bg-[length:200%_200%] animate-gradient-x text-white shadow-md hover:scale-105 active:scale-95 transition-transform",
     secondary:
-      "bg-[var(--app-gray)] hover:bg-[var(--app-gray-dark)] text-[var(--app-foreground)]",
+      "bg-[var(--app-accent-light)] hover:bg-[var(--app-accent)] text-[var(--app-accent)] hover:text-[var(--app-background)] border border-[var(--app-accent)]",
     outline:
-      "border border-[var(--app-accent)] hover:bg-[var(--app-accent-light)] text-[var(--app-accent)]",
+      "bg-transparent border border-[var(--app-card-border)] text-[var(--app-foreground)] hover:bg-[var(--app-accent-light)] hover:text-[var(--app-accent)]",
     ghost:
       "hover:bg-[var(--app-accent-light)] text-[var(--app-foreground-muted)]",
   };
+
+  if (typeof window !== 'undefined' && !document.getElementById('gradient-x-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'gradient-x-keyframes';
+    style.innerHTML = `@keyframes gradient-x { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }`;
+    document.head.appendChild(style);
+  }
 
   const sizeClasses = {
     sm: "text-xs px-2.5 py-1.5 rounded-md",
@@ -72,13 +79,13 @@ export function Button({
 }
 
 type CardProps = {
-  title?: string;
-  children: ReactNode;
+  title?: React.ReactNode;
+  children: React.ReactNode;
   className?: string;
   onClick?: () => void;
 }
 
-function Card({
+export function Card({
   title,
   children,
   className = "",
@@ -93,15 +100,16 @@ function Card({
 
   return (
     <div
-      className={`bg-[var(--app-card-bg)] backdrop-blur-md rounded-xl shadow-lg border border-[var(--app-card-border)] overflow-hidden transition-all hover:shadow-xl ${className} ${onClick ? "cursor-pointer" : ""}`}
+      className={`bg-[var(--app-card-bg)] backdrop-blur-md rounded-xl shadow-xl border border-[var(--app-card-border)] overflow-hidden transition-all hover:shadow-2xl hover:scale-[1.025] active:scale-[0.98] ${className} ${onClick ? "cursor-pointer" : ""}`}
+      style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)' }}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
       tabIndex={onClick ? 0 : undefined}
       role={onClick ? "button" : undefined}
     >
       {title && (
-        <div className="px-5 py-3 border-b border-[var(--app-card-border)]">
-          <h3 className="text-lg font-medium text-[var(--app-foreground)]">
+        <div className="px-5 py-3 border-b border-[var(--app-card-border)] bg-gradient-to-r from-[#ffecd2]/60 via-[#fcb69f]/60 to-[#24c6dc]/60 animate-gradient-x">
+          <h3 className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#ff4e50] via-[#f9d423] to-[#24c6dc] animate-gradient-x">
             {title}
           </h3>
         </div>
@@ -117,37 +125,45 @@ type FeaturesProps = {
 
 export function Features({ setActiveTab }: FeaturesProps) {
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="relative space-y-6 animate-fadein">
+      {/* Animated Confetti/Sparkles */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        {[...Array(10)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full opacity-50 animate-bounce"
+            style={{
+              left: `${Math.random() * 95}%`,
+              top: `${Math.random() * 95}%`,
+              width: `${12 + Math.random() * 24}px`,
+              height: `${12 + Math.random() * 24}px`,
+              background: `linear-gradient(120deg, #ffecd2, #fcb69f, #24c6dc)`,
+              filter: 'blur(2px)',
+              animationDelay: `${i * 0.3}s`,
+            }}
+          />
+        ))}
+      </div>
       <Card title="Key Features">
         <ul className="space-y-3 mb-4">
           <li className="flex items-start">
             <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              Minimalistic and beautiful UI design
-            </span>
+            <span className="text-[var(--app-foreground-muted)]">Play a new quiz every day and earn points</span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              Responsive layout for all devices
-            </span>
+            <span className="text-[var(--app-foreground-muted)]">Create custom quizzes and share them as Farcaster frames</span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              Dark mode support
-            </span>
+            <span className="text-[var(--app-foreground-muted)]">Compete on the leaderboard with friends</span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              OnchainKit integration
-            </span>
+            <span className="text-[var(--app-foreground-muted)]">Minimal, beautiful, and responsive UI</span>
           </li>
         </ul>
-        <Button variant="outline" onClick={() => setActiveTab("home")}>
-          Back to Home
-        </Button>
+        <Button variant="outline" onClick={() => setActiveTab("home")}>Back to Home</Button>
       </Card>
     </div>
   );
@@ -157,24 +173,67 @@ type HomeProps = {
   setActiveTab: (tab: string) => void;
 };
 
-export function Home({ setActiveTab }: HomeProps) {
+export function Home({ setActiveTab, streak = 0 }: HomeProps & { streak?: number }) {
   return (
-    <div className="space-y-6 animate-fade-in">
-      <Card title="My Fidrst Mini App">
+    <div className="relative space-y-6 animate-fadein">
+      {/* Animated Confetti/Sparkles */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full opacity-60 animate-bounce"
+            style={{
+              left: `${Math.random() * 95}%`,
+              top: `${Math.random() * 95}%`,
+              width: `${16 + Math.random() * 24}px`,
+              height: `${16 + Math.random() * 24}px`,
+              background: `linear-gradient(120deg, #ffecd2, #fcb69f, #24c6dc)`,
+              filter: 'blur(1.5px)',
+              animationDelay: `${i * 0.2}s`,
+            }}
+          />
+        ))}
+      </div>
+      <div className="flex justify-center mb-2 relative z-10">
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 font-semibold shadow">
+          🔥 Streak: {streak} {streak === 1 ? 'day' : 'days'}
+        </span>
+      </div>
+      <Card title="Welcome to QuizCast!">
         <p className="text-[var(--app-foreground-muted)] mb-4">
-          This is a minimalistic Mini App built with OnchainKit components.
+          Welcome to the most fun quiz app on Base! Play daily quizzes, create your own, and compete with friends.
         </p>
-        <Button
-          onClick={() => setActiveTab("features")}
-          icon={<Icon name="arrow-right" size="sm" />}
-        >
-          Explore Features
-        </Button>
+        <div className="flex flex-col gap-3">
+          <Button
+            variant="primary"
+            onClick={() => setActiveTab("quiz-creator")}
+            icon={<Icon name="plus" size="sm" />}
+          >
+            Create a Quiz
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setActiveTab("daily-quiz")}
+            icon={<Icon name="star" size="sm" />}
+          >
+            Play Daily Quiz
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setActiveTab("leaderboard")}
+            icon={<Icon name="check" size="sm" />}
+          >
+            View Leaderboard
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setActiveTab("my-quizzes")}
+            icon={<Icon name="arrow-right" size="sm" />}
+          >
+            My Quizzes
+          </Button>
+        </div>
       </Card>
-
-      <TodoList />
-
-      <TransactionCard />
     </div>
   );
 }
@@ -381,81 +440,6 @@ function TodoList() {
             </li>
           ))}
         </ul>
-      </div>
-    </Card>
-  );
-}
-
-
-function TransactionCard() {
-  const { address } = useAccount();
-
-  // Example transaction call - sending 0 ETH to self
-  const calls = useMemo(() => address
-    ? [
-        {
-          to: address,
-          data: "0x" as `0x${string}`,
-          value: BigInt(0),
-        },
-      ]
-    : [], [address]);
-
-  const sendNotification = useNotification();
-
-  const handleSuccess = useCallback(async (response: TransactionResponse) => {
-    const transactionHash = response.transactionReceipts[0].transactionHash;
-
-    console.log(`Transaction successful: ${transactionHash}`);
-
-    await sendNotification({
-      title: "Congratulations!",
-      body: `You sent your a transaction, ${transactionHash}!`,
-    });
-  }, [sendNotification]);
-
-  return (
-    <Card title="Make Your First Transaction">
-      <div className="space-y-4">
-        <p className="text-[var(--app-foreground-muted)] mb-4">
-          Experience the power of seamless sponsored transactions with{" "}
-          <a
-            href="https://onchainkit.xyz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#0052FF] hover:underline"
-          >
-            OnchainKit
-          </a>
-          .
-        </p>
-
-        <div className="flex flex-col items-center">
-          {address ? (
-            <Transaction
-              calls={calls}
-              onSuccess={handleSuccess}
-              onError={(error: TransactionError) =>
-                console.error("Transaction failed:", error)
-              }
-            >
-              <TransactionButton className="text-white text-md" />
-              <TransactionStatus>
-                <TransactionStatusAction />
-                <TransactionStatusLabel />
-              </TransactionStatus>
-              <TransactionToast className="mb-4">
-                <TransactionToastIcon />
-                <TransactionToastLabel />
-                <TransactionToastAction />
-              </TransactionToast>
-            </Transaction>
-          ) : (
-            <p className="text-yellow-400 text-sm text-center mt-2">
-              Connect your wallet to send a transaction
-            </p>
-          )}
-        </div>
       </div>
     </Card>
   );

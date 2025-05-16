@@ -5,29 +5,22 @@ import {
   useAddFrame,
   useOpenUrl,
 } from "@coinbase/onchainkit/minikit";
-import {
-  Name,
-  Identity,
-  Address,
-  Avatar,
-  EthBalance,
-} from "@coinbase/onchainkit/identity";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
+
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Button } from "./components/DemoComponents";
-import { Icon } from "./components/DemoComponents";
-import { Home } from "./components/DemoComponents";
-import { Features } from "./components/DemoComponents";
+import { Home, Features } from "./components/DemoComponents";
+import Leaderboard from "./components/Leaderboard";
+import { Icon, Button } from "./components/DemoComponents";
+import DailyQuiz, { getStreak } from "./components/DailyQuiz";
+import QuizCreator from "./components/QuizCreator";
+import MyQuizzes from "./components/MyQuizzes";
+import { sdk } from '@farcaster/frame-sdk';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const [frameAdded, setFrameAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+  const [streak, setStreak] = useState(0);
+  const [userFid, setUserFid] = useState<number | null>(null);
 
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
@@ -37,6 +30,26 @@ export default function App() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
+
+  useEffect(() => {
+    async function getUserFID() {
+      try {
+        const context = await sdk.context;
+        if (context && context.user && context.user.fid) {
+          setUserFid(context.user.fid);
+        } else {
+          setUserFid(null);
+        }
+      } catch (err) {
+        setUserFid(null);
+      }
+    }
+    getUserFID();
+  }, []);
+
+  useEffect(() => {
+    setStreak(getStreak());
+  }, [activeTab]);
 
   const handleAddFrame = useCallback(async () => {
     const frameAdded = await addFrame();
@@ -71,45 +84,45 @@ export default function App() {
   }, [context, frameAdded, handleAddFrame]);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
-      <div className="w-full max-w-md mx-auto px-4 py-3">
+    <div
+      className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)]"
+      style={{
+        background: 'linear-gradient(120deg, #ffecd2 0%, #fcb69f 50%, #24c6dc 100%)',
+        backgroundSize: '200% 200%',
+        animation: 'gradientBG 12s ease-in-out infinite',
+      }}
+    >
+      <style>{`
+        @keyframes gradientBG {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .animate-fadein { animation: fadeIn 1.2s cubic-bezier(.39,.575,.565,1) both; }
+        @keyframes fadeIn {
+          0% { opacity: 0; transform: translateY(24px); }
+          100% { opacity: 1; transform: none; }
+        }
+      `}</style>
+      <div className="w-full max-w-md mx-auto px-4 py-3 animate-fadein">
         <header className="flex justify-between items-center mb-3 h-11">
-          <div>
-            <div className="flex items-center space-x-2">
-              <Wallet className="z-10">
-                <ConnectWallet>
-                  <Name className="text-inherit" />
-                </ConnectWallet>
-                <WalletDropdown>
-                  <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-                    <Avatar />
-                    <Name />
-                    <Address />
-                    <EthBalance />
-                  </Identity>
-                  <WalletDropdownDisconnect />
-                </WalletDropdown>
-              </Wallet>
-            </div>
-          </div>
-          <div>{saveFrameButton}</div>
-        </header>
+  <div className="flex items-center space-x-2">
+    <Icon name="star" size="lg" className="text-yellow-400 animate-bounce" />
+    <span className="font-bold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#ff4e50] via-[#f9d423] to-[#24c6dc] animate-gradient-x">QuizCast</span>
+  </div>
+  <div>{saveFrameButton}</div>
+</header>
 
         <main className="flex-1">
-          {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
+          {activeTab === "home" && <Home setActiveTab={setActiveTab} streak={streak} />}
           {activeTab === "features" && <Features setActiveTab={setActiveTab} />}
+          {activeTab === "daily-quiz" && <DailyQuiz onBack={() => setActiveTab("home")} />}
+          {activeTab === "quiz-creator" && userFid && <QuizCreator onBack={() => setActiveTab("home")} userFid={userFid} />}
+          {activeTab === "leaderboard" && <Leaderboard onBack={() => setActiveTab("home")} />}
+          {activeTab === "my-quizzes" && userFid && <MyQuizzes onBack={() => setActiveTab("home")} userFid={userFid} />}
+          {!userFid && <div>Loading Farcaster user...</div>}
         </main>
-
-        <footer className="mt-2 pt-4 flex justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-[var(--ock-text-foreground-muted)] text-xs"
-            onClick={() => openUrl("https://base.org/builders/minikit")}
-          >
-            Built on Base with MiniKit
-          </Button>
-        </footer>
+        
       </div>
     </div>
   );
