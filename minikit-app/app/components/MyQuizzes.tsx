@@ -72,11 +72,18 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
         }
 
         // Parse questions field if it's a string
-        const parsedQuizzes = quizData.map((quiz: any) => ({
-          ...quiz,
-          questions: typeof quiz.questions === 'string' ? JSON.parse(quiz.questions) : quiz.questions,
-        }));
-        setQuizzes(parsedQuizzes);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const parsedQuizzes = quizData.map((quiz: unknown) => {
+          const q = quiz as {
+            questions: string | object;
+            [key: string]: any;
+          };
+        
+          return {
+            ...q,
+            questions: typeof q.questions === 'string' ? JSON.parse(q.questions) : q.questions,
+          };
+        });        
 
         // 2. Fetch user interactions for these quizzes
         const quizIds = quizData.map((q: Quiz) => q.id);
