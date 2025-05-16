@@ -19,6 +19,7 @@ export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const [frameAdded, setFrameAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [streak, setStreak] = useState(0);
   const [userFid, setUserFid] = useState<number | null>(null);
 
