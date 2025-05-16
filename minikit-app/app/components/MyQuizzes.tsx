@@ -253,7 +253,7 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
         
         {selected.questions.length === 0 ? (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-3 rounded mb-4">
-            This quiz doesn't have any questions yet.
+            {'This quiz doesn\'t have any questions yet.'}
           </div>
         ) : (
           <ol className="mb-4 space-y-4">

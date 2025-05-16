@@ -147,6 +147,7 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   }
 
   // Reset quiz if user is allowed to play again
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function handleRestart() {
     setStep("quiz");
     setCurrent(0);
@@ -164,7 +165,7 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
       {error && <div className="text-center text-red-500">Failed to load questions. <Button onClick={handleRetry}>Retry</Button></div>}
       {!loading && lockedUntil && Date.now() < lockedUntil && (
         <div className="text-center">
-          <div className="mb-2 text-[var(--app-foreground-muted)]">You have already completed today's Daily Quiz!</div>
+          <div className="mb-2 text-[var(--app-foreground-muted)]">{'You have already completed today\'s Daily Quiz!'}</div>
           <div className="mb-4 text-sm">Come back in {Math.ceil((lockedUntil - Date.now())/1000/60/60)} hour(s) to play again.</div>
           <Button variant="primary" onClick={onBack}>Back to Home</Button>
         </div>
