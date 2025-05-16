@@ -4,10 +4,17 @@ import { Card, Button, Icon } from "./DemoComponents";
 import { supabase } from "../lib/supabaseClient";
 
 
+interface Question {
+  text: string;
+  options: string[];
+  answer: number;
+  media?: string;
+}
+
 interface Quiz {
   id: string;
   title: string;
-  questions: any[]; // Replace 'any' with a proper Question type if available
+  questions: Question[];
   created_at: string;
 }
 
@@ -55,8 +62,8 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
           .in('quiz_id', quizIds);
         if (!intErr && intData) {
           const intMap: {[quizId: string]: UserQuizInteraction} = {};
-          intData.forEach((int: any) => {
-            intMap[int.quiz_id] = int as UserQuizInteraction;
+          intData.forEach((int: UserQuizInteraction) => {
+            intMap[int.quiz_id] = int;
           });
           setInteractions(intMap);
         }

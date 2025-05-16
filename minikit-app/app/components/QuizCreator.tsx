@@ -74,7 +74,7 @@ export default function QuizCreator({ onBack, userFid }: QuizCreatorProps) {
     return () => clearTimeout(timerRef.current!);
   }, [timer, step]);
 
-  function handleQuestionChange(idx: number, field: keyof CreateQuestion, value: any) {
+  function handleQuestionChange(idx: number, field: keyof CreateQuestion, value: unknown) {
     setQuestions((qs) => qs.map((q, i) => i === idx ? { ...q, [field]: value } : q));
     // If changing media, set type as well
     if (field === 'media' && value) {
@@ -113,10 +113,6 @@ export default function QuizCreator({ onBack, userFid }: QuizCreatorProps) {
   function handlePreview() {
     setStep("preview");
     setTimer(QUESTION_TIME);
-  }
-  function handleShare() {
-    setShareUrl("https://farcaster.xyz/frame/quiz/" + Math.floor(Math.random()*10000));
-    setStep("shared");
   }
   function isValidQuestion(q: CreateQuestion) {
     return q.text && q.options.every(o => o) && q.answer !== null && (q.type === "text" || q.media);
