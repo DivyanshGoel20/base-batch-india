@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 
 type ButtonProps = {
@@ -24,32 +24,27 @@ export function Button({
   type = "button",
   icon,
 }: ButtonProps) {
+  // Redesigned for a calm, modern, balanced look
   const baseClasses =
-    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0052FF] disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[var(--app-accent)] disabled:opacity-50 disabled:pointer-events-none rounded-lg";
 
   const variantClasses = {
     primary:
-      "bg-gradient-to-r from-[#ff4e50] via-[#f9d423] to-[#24c6dc] bg-[length:200%_200%] animate-gradient-x text-white shadow-md hover:scale-105 active:scale-95 transition-transform",
+      "bg-[var(--app-accent)] text-white hover:bg-[var(--app-accent-hover)] active:bg-[var(--app-accent-active)] shadow-sm",
     secondary:
-      "bg-[var(--app-accent-light)] hover:bg-[var(--app-accent)] text-[var(--app-accent)] hover:text-[var(--app-background)] border border-[var(--app-accent)]",
+      "bg-[var(--app-accent-light)] text-[var(--app-accent)] border border-[var(--app-accent)] hover:bg-[var(--app-accent)] hover:text-white",
     outline:
       "bg-transparent border border-[var(--app-card-border)] text-[var(--app-foreground)] hover:bg-[var(--app-accent-light)] hover:text-[var(--app-accent)]",
     ghost:
       "hover:bg-[var(--app-accent-light)] text-[var(--app-foreground-muted)]",
   };
 
-  if (typeof window !== 'undefined' && !document.getElementById('gradient-x-keyframes')) {
-    const style = document.createElement('style');
-    style.id = 'gradient-x-keyframes';
-    style.innerHTML = `@keyframes gradient-x { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }`;
-    document.head.appendChild(style);
-  }
-
   const sizeClasses = {
-    sm: "text-xs px-2.5 py-1.5 rounded-md",
+    sm: "text-xs px-3 py-1.5 rounded-md",
     md: "text-sm px-4 py-2 rounded-lg",
     lg: "text-base px-6 py-3 rounded-lg",
   };
+
 
   return (
     <button
@@ -86,16 +81,16 @@ export function Card({
 
   return (
     <div
-      className={`bg-[var(--app-card-bg)] backdrop-blur-md rounded-xl shadow-xl border border-[var(--app-card-border)] overflow-hidden transition-all hover:shadow-2xl hover:scale-[1.025] active:scale-[0.98] ${className} ${onClick ? "cursor-pointer" : ""}`}
-      style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)' }}
+      className={`bg-white/80 dark:bg-[#18181b]/80 border border-[var(--app-card-border)] rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden ${className} ${onClick ? "cursor-pointer" : ""}`}
+      style={{ boxShadow: '0 2px 12px 0 rgba(31, 38, 135, 0.07)' }}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
       tabIndex={onClick ? 0 : undefined}
       role={onClick ? "button" : undefined}
     >
       {title && (
-        <div className="px-5 py-3 border-b border-[var(--app-card-border)] bg-gradient-to-r from-[#ffecd2]/60 via-[#fcb69f]/60 to-[#24c6dc]/60 animate-gradient-x">
-          <h3 className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#ff4e50] via-[#f9d423] to-[#24c6dc] animate-gradient-x">
+        <div className="px-5 py-3 border-b border-[var(--app-card-border)] bg-transparent">
+          <h3 className="text-lg font-bold text-[var(--app-foreground)]">
             {title}
           </h3>
         </div>
@@ -111,34 +106,16 @@ type FeaturesProps = {
 
 export function Features({ setActiveTab }: FeaturesProps) {
   return (
-    <div className="relative space-y-6 animate-fadein">
-      {/* Animated Confetti/Sparkles */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full opacity-50 animate-bounce"
-            style={{
-              left: `${Math.random() * 95}%`,
-              top: `${Math.random() * 95}%`,
-              width: `${12 + Math.random() * 24}px`,
-              height: `${12 + Math.random() * 24}px`,
-              background: `linear-gradient(120deg, #ffecd2, #fcb69f, #24c6dc)`,
-              filter: 'blur(2px)',
-              animationDelay: `${i * 0.3}s`,
-            }}
-          />
-        ))}
-      </div>
+    <div className="space-y-6 animate-fadein">
       <Card title="Key Features">
         <ul className="space-y-3 mb-4">
           <li className="flex items-start">
             <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">Play a new quiz every day and earn points</span>
+            <span className="text-[var(--app-foreground-muted)]">Daily quiz with new questions every day</span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">Create custom quizzes and share them as Farcaster frames</span>
+            <span className="text-[var(--app-foreground-muted)]">Create and share your own quizzes</span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
@@ -149,7 +126,6 @@ export function Features({ setActiveTab }: FeaturesProps) {
             <span className="text-[var(--app-foreground-muted)]">Minimal, beautiful, and responsive UI</span>
           </li>
         </ul>
-        <Button variant="outline" onClick={() => setActiveTab("home")}>Back to Home</Button>
       </Card>
     </div>
   );
@@ -160,61 +136,69 @@ type HomeProps = {
 };
 
 export function Home({ setActiveTab, streak = 0 }: HomeProps & { streak?: number }) {
+  const [musicMuted, setMusicMuted] = useState(true);
+
   return (
-    <div className="relative space-y-6 animate-fadein">
-      {/* Animated Confetti/Sparkles */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full opacity-60 animate-bounce"
-            style={{
-              left: `${Math.random() * 95}%`,
-              top: `${Math.random() * 95}%`,
-              width: `${16 + Math.random() * 24}px`,
-              height: `${16 + Math.random() * 24}px`,
-              background: `linear-gradient(120deg, #ffecd2, #fcb69f, #24c6dc)`,
-              filter: 'blur(1.5px)',
-              animationDelay: `${i * 0.2}s`,
-            }}
-          />
-        ))}
+    <div className="space-y-6 animate-fadein">
+      {/* App Name & Music Toggle */}
+      <div className="flex justify-between items-center mb-4">
+        <span className="font-bold text-3xl text-[var(--app-accent)] tracking-tight">WarpQuiz</span>
+        <button
+          onClick={() => setMusicMuted((m: boolean) => !m)}
+          className={`px-3 py-1 rounded text-xs font-semibold border border-[var(--app-accent)] ml-2 transition-all ${musicMuted ? 'bg-white text-[var(--app-accent)]' : 'bg-[var(--app-accent)] text-white'}`}
+          aria-label={musicMuted ? 'Unmute music' : 'Mute music'}
+        >
+          {musicMuted ? '🎵 Music Off' : '🎶 Music On'}
+        </button>
       </div>
-      <div className="flex justify-center mb-2 relative z-10">
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 font-semibold shadow">
-          🔥 Streak: {streak} {streak === 1 ? 'day' : 'days'}
+      {/* Music Player (hidden visually) */}
+      <audio
+        ref={audio => {
+          if (audio) audio.volume = 0.25;
+        }}
+        src="/funk-music.mp3"
+        autoPlay
+        loop
+        muted={musicMuted}
+        style={{ display: 'none' }}
+      />
+      {/* Streak with Fire Emoji */}
+      <div className="flex justify-center mb-2">
+        <span className="inline-flex items-center px-4 py-1 rounded-full bg-orange-100 text-orange-700 font-semibold shadow text-base">
+          <span className="mr-1">🔥</span> Streak: {streak} {streak === 1 ? 'day' : 'days'}
         </span>
       </div>
-      <Card title="Welcome to QuizCast!">
-        <p className="text-[var(--app-foreground-muted)] mb-4">
+      {/* Card with Options */}
+      <Card className="bg-white/90 dark:bg-zinc-900/90 shadow-lg p-6">
+        <p className="text-[var(--app-foreground-muted)] mb-6 text-center text-base">
           Welcome to the most fun quiz app on Base! Play daily quizzes, create your own, and compete with friends.
         </p>
         <div className="flex flex-col gap-3">
           <Button
             variant="primary"
+            className="w-full"
             onClick={() => setActiveTab("quiz-creator")}
-            icon={<Icon name="plus" size="sm" />}
           >
             Create a Quiz
           </Button>
           <Button
             variant="secondary"
+            className="w-full"
             onClick={() => setActiveTab("daily-quiz")}
-            icon={<Icon name="star" size="sm" />}
           >
             Play Daily Quiz
           </Button>
           <Button
-            variant="outline"
+            variant="secondary"
+            className="w-full"
             onClick={() => setActiveTab("leaderboard")}
-            icon={<Icon name="check" size="sm" />}
           >
-            View Leaderboard
+            Leaderboard
           </Button>
           <Button
-            variant="ghost"
+            variant="secondary"
+            className="w-full"
             onClick={() => setActiveTab("my-quizzes")}
-            icon={<Icon name="arrow-right" size="sm" />}
           >
             My Quizzes
           </Button>
@@ -223,6 +207,33 @@ export function Home({ setActiveTab, streak = 0 }: HomeProps & { streak?: number
     </div>
   );
 }
+
+// Local demo for tab switching if setActiveTab is not passed as a prop
+function DemoTabSwitcher() {
+  const [activeTab, setActiveTab] = useState("leaderboard");
+  return (
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        onClick={() => setActiveTab("leaderboard")}
+        className={`flex-1 ${activeTab === "leaderboard" ? 'font-bold border-b-2 border-[var(--app-accent)]' : ''}`}
+      >
+        Leaderboard
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => setActiveTab("my-quizzes")}
+        className={`flex-1 ${activeTab === "my-quizzes" ? 'font-bold border-b-2 border-[var(--app-accent)]' : ''}`}
+      >
+        My Quizzes
+      </Button>
+    </div>
+  );
+}
+
+// Export or use <DemoTabSwitcher /> wherever you need a local tab switcher for demo/testing
+
+
 
 type IconProps = {
   name: "heart" | "star" | "check" | "plus" | "arrow-right";
@@ -236,6 +247,9 @@ export function Icon({ name, size = "md", className = "" }: IconProps) {
     md: "w-5 h-5",
     lg: "w-6 h-6",
   };
+
+  // Use a neutral, calm color for icons by default
+  const iconColorClass = "text-[var(--app-accent)]";
 
   const icons = {
     heart: (
@@ -318,7 +332,7 @@ export function Icon({ name, size = "md", className = "" }: IconProps) {
   };
 
   return (
-    <span className={`inline-block ${sizeClasses[size]} ${className}`}>
+    <span className={`inline-block ${sizeClasses[size]} ${iconColorClass} ${className}`}>
       {icons[name]}
     </span>
   );

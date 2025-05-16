@@ -40,10 +40,12 @@ export default function MyQuizzes({ onBack, userFid }: MyQuizzesProps) {
     async function fetchData() {
       setLoading(true);
       // 1. Fetch quizzes created by this user
+      // Debug: Log userFid and its type before querying
+      console.log('Fetching quizzes with creator_fid:', userFid, typeof userFid);
       const { data: quizData, error: quizErr } = await supabase
         .from('quizzes')
         .select('*')
-        .eq('creator_fid', userFid)
+        .eq('creator_fid', userFid) // Ensure userFid is a number everywhere
         .order('created_at', { ascending: false });
       if (quizErr) {
         setQuizzes([]);

@@ -41,10 +41,12 @@ export default function QuizCreator({ onBack, userFid }: QuizCreatorProps) {
 
     // Generate a random id (uuid or random string)
     const quizId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    // Debug: Log userFid and its type before insert
+    console.log('Inserting quiz with creator_fid:', userFid, typeof userFid);
     const { error } = await supabase.from('quizzes').insert([
       {
         id: quizId,
-        creator_fid: userFid,
+        creator_fid: userFid, // Make sure this is a number everywhere
         title: title.trim() || "Untitled Quiz",
         questions: questions,
         created_at: new Date().toISOString(),
@@ -55,6 +57,8 @@ export default function QuizCreator({ onBack, userFid }: QuizCreatorProps) {
       setQuestions([{ type: "text" as QuestionType, text: "", options: ["", "", "", ""], answer: null }]);
       setCurrent(0);
       setTitle("");
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      onBack();
       setTimeout(() => {
         setCreated(false);
         onBack();

@@ -1,8 +1,7 @@
 "use client";
 
 import {
-  useMiniKit,
-  useAddFrame,
+  useMiniKit
 } from "@coinbase/onchainkit/minikit";
 
 // ig
@@ -16,14 +15,11 @@ import MyQuizzes from "./components/MyQuizzes";
 import { sdk } from '@farcaster/frame-sdk';
 
 export default function App() {
-  const { setFrameReady, isFrameReady, context } = useMiniKit();
-  const [frameAdded, setFrameAdded] = useState(false);
+  const { setFrameReady, isFrameReady } = useMiniKit();
   const [activeTab, setActiveTab] = useState("home");
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [streak, setStreak] = useState(0);
   const [userFid, setUserFid] = useState<number | null>(null);
-
-  const addFrame = useAddFrame();
 
 
   useEffect(() => {
@@ -54,37 +50,6 @@ export default function App() {
   }, []);
 
 
-  const handleAddFrame = useCallback(async () => {
-    const frameAdded = await addFrame();
-    setFrameAdded(Boolean(frameAdded));
-  }, [addFrame]);
-
-  const saveFrameButton = useMemo(() => {
-    if (context && !context.client.added) {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleAddFrame}
-          className="text-[var(--app-accent)] p-4"
-          icon={<Icon name="plus" size="sm" />}
-        >
-          Save Frame
-        </Button>
-      );
-    }
-
-    if (frameAdded) {
-      return (
-        <div className="flex items-center space-x-1 text-sm font-medium text-[#0052FF] animate-fade-out">
-          <Icon name="check" size="sm" className="text-[#0052FF]" />
-          <span>Saved</span>
-        </div>
-      );
-    }
-
-    return null;
-  }, [context, frameAdded, handleAddFrame]);
 
   return (
     <div
@@ -109,11 +74,6 @@ export default function App() {
       `}</style>
       <div className="w-full max-w-md mx-auto px-4 py-3 animate-fadein">
         <header className="flex justify-between items-center mb-3 h-11">
-  <div className="flex items-center space-x-2">
-    <Icon name="star" size="lg" className="text-yellow-400 animate-bounce" />
-    <span className="font-bold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#ff4e50] via-[#f9d423] to-[#24c6dc] animate-gradient-x">QuizCast</span>
-  </div>
-  <div>{saveFrameButton}</div>
 </header>
 
         <main className="flex-1">

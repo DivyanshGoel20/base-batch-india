@@ -30,8 +30,6 @@ function isAfterDailyResetIST() {
   return ist.getHours() > 12 || (ist.getHours() === 12 && ist.getMinutes() >= 30);
 }
 
-// No longer needed - we're using API seeding instead
-
 // Global variable to cache fetched questions (shared across browser tabs)
 // GLOBAL_CACHE_KEY removed: no cache in localStorage
 
