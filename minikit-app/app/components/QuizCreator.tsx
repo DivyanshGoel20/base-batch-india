@@ -29,7 +29,7 @@ export default function QuizCreator({ onBack, userFid }: QuizCreatorProps) {
     answer: null,
   }]);
   const [current, setCurrent] = useState(0);
-  const [shareUrl, setShareUrl] = useState<string>("");
+  const [shareUrl] = useState<string>("");
   const [timer, setTimer] = useState(QUESTION_TIME);
   const [title, setTitle] = useState("");
   const [created, setCreated] = useState(false);
@@ -78,7 +78,12 @@ export default function QuizCreator({ onBack, userFid }: QuizCreatorProps) {
     setQuestions((qs) => qs.map((q, i) => i === idx ? { ...q, [field]: value } : q));
     // If changing media, set type as well
     if (field === 'media' && value) {
-      const fileType = value.startsWith('data:image/') ? 'image' : value.startsWith('data:audio/') ? 'audio' : value.startsWith('data:video/') ? 'video' : 'text';
+      let fileType: QuestionType = 'text';
+      if (typeof value === 'string') {
+        if (value.startsWith('data:image/')) fileType = 'image';
+        else if (value.startsWith('data:audio/')) fileType = 'audio';
+        else if (value.startsWith('data:video/')) fileType = 'video';
+      }
       setQuestions((qs) => qs.map((q, i) => i === idx ? { ...q, type: fileType } : q));
     }
   }

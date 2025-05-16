@@ -1,7 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
+import { type ReactNode } from "react";
 
 
 type ButtonProps = {
