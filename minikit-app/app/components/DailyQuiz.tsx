@@ -31,38 +31,18 @@ function isAfterDailyResetIST() {
 // No longer needed - we're using API seeding instead
 
 // Global variable to cache fetched questions (shared across browser tabs)
-const GLOBAL_CACHE_KEY = "global_daily_quiz_fetched";
+// GLOBAL_CACHE_KEY removed: no cache in localStorage
 
-// Fetch and store daily questions if needed
-async function ensureDailyQuestions() {
+// Fetch daily questions from API or database
+async function fetchDailyQuestions() {
+  // Use a fixed seed for the day to ensure everyone gets the same random questions
   const today = getISTDateString();
-  const key = `daily_quiz_questions_${today}`;
-  
-  // Check if we already have today's questions
-  if (localStorage.getItem(key)) {
-    return; // Already have questions, no need to fetch
-  }
-  
-  // Check if another tab/instance has already fetched today's questions
-  if (localStorage.getItem(GLOBAL_CACHE_KEY) === today) {
-    // Wait a moment and check again - maybe another tab just finished fetching
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (localStorage.getItem(key)) {
-      return; // Another tab has fetched, we can use those questions
-    }
-  }
-  
-  // Set the global flag to prevent other tabs from fetching simultaneously
-  localStorage.setItem(GLOBAL_CACHE_KEY, today);
-  
+  const daySeed = parseInt(today.replace(/-/g, ''));
+  const seedParam = `&seed=${daySeed}`;
+
   try {
-    // Use a fixed seed for the day to ensure everyone gets the same random questions
-    const daySeed = parseInt(today.replace(/-/g, ''));
-    const seedParam = `&seed=${daySeed}`;
-    
     const resp = await fetch('https://the-trivia-api.com/v2/questions?limit=5' + seedParam);
     const data = await resp.json();
-    
     // Don't sort or shuffle - use exactly what the API returned with our seed
     const questions = data.slice(0, QUIZ_LENGTH).map((q: any) => {
       // Create a fixed order of options (correct answer always first)
@@ -73,30 +53,14 @@ async function ensureDailyQuestions() {
         answer: 0, // Correct answer is always first in our array
       };
     });
-    
-    // Store the exact same questions for everyone
-    localStorage.setItem(key, JSON.stringify(questions));
+    return questions;
   } catch (e) {
-    // Remove the global flag so other tabs can try fetching
-    localStorage.removeItem(GLOBAL_CACHE_KEY);
     console.error("Failed to fetch quiz questions:", e);
+    return null;
   }
 }
 
-export function getStreak() {
-  const streakKey = 'quiz_streak';
-  const lastPlayedKey = 'quiz_streak_last_played';
-  const streak = parseInt(localStorage.getItem(streakKey) || '0', 10);
-  const lastPlayed = parseInt(localStorage.getItem(lastPlayedKey) || '0', 10);
-  if (!lastPlayed) return 0;
-  const last = new Date(lastPlayed);
-  const now = new Date();
-  // If last played is yesterday, streak continues; if today, keep; else reset
-  const diff = Math.floor((now.setHours(0,0,0,0) - last.setHours(0,0,0,0)) / (1000*60*60*24));
-  if (diff === 0) return streak;
-  if (diff === 1) return streak;
-  return 0;
-}
+
 
 export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   // Helper to get today's IST date string
@@ -107,6 +71,7 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   // State for questions and loading
   const [questions, setQuestions] = useState<Array<{text: string; options: string[]; answer: number}>|null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   // Helper to get yesterday's IST date string
   function getYesterdayISTDateString() {
@@ -123,64 +88,12 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   async function loadQuestions() {
     setLoading(true);
     setError(false);
-    
-    let useToday = isAfterDailyResetIST();
-    const todayKey = `daily_quiz_questions_${getISTDateString()}`;
-    const yestKey = `daily_quiz_questions_${getYesterdayISTDateString()}`;
-    let key = useToday ? todayKey : yestKey;
-    
-    // Step 1: Try to get the questions directly from localStorage first
-    let qs: any = null;
-    if (localStorage.getItem(key)) {
-      try { 
-        qs = JSON.parse(localStorage.getItem(key)!); 
-      } catch { 
-        qs = null; 
-      }
-    }
-    
-    // Step 2: If questions aren't found, try to fetch them only once per day
-    if (!qs) {
-      try {
-        // This will only fetch if no questions exist for today and no other tab is fetching
-        await ensureDailyQuestions();
-        
-        // Try to get questions again after fetch attempt
-        if (localStorage.getItem(key)) {
-          try { 
-            qs = JSON.parse(localStorage.getItem(key)!); 
-          } catch { 
-            qs = null; 
-          }
-        }
-      } catch (e) {
-        console.error("Error fetching questions:", e);
-      }
-    }
-    
-    // Step 3: Fallback - if after fetching we still don't have questions, try the other day's questions
-    if (!qs && !useToday && localStorage.getItem(todayKey)) {
-      try { 
-        qs = JSON.parse(localStorage.getItem(todayKey)!); 
-      } catch { 
-        qs = null; 
-      }
-    } else if (!qs && useToday && localStorage.getItem(yestKey)) {
-      try { 
-        qs = JSON.parse(localStorage.getItem(yestKey)!); 
-      } catch { 
-        qs = null; 
-      }
-    }
-    
-    // Set questions and update UI state
+    const qs = await fetchDailyQuestions();
     setQuestions(qs);
     setLoading(false);
     if (!qs || !Array.isArray(qs) || qs.length === 0) setError(true);
   }
 
-  // Error state for loading
-  const [error, setError] = useState(false);
   // Retry handler
   function handleRetry() {
     setError(false);
@@ -192,7 +105,7 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     // Add an event listener to detect when other tabs fetch new questions
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === GLOBAL_CACHE_KEY || e.key?.startsWith('daily_quiz_questions_')) {
+      if (e.key?.startsWith('daily_quiz_questions_')) {
         // Another tab may have fetched new questions, check again
         loadQuestions();
       }
@@ -222,8 +135,9 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
   // Check if quiz is already completed or failed today
   useEffect(() => {
     const today = getToday();
-    const completedAt = localStorage.getItem(DAILY_QUIZ_KEY);
-    const failedAt = localStorage.getItem('daily_quiz_failed');
+    // TODO: Fetch completion and failure state from backend
+    const completedAt = null;
+    const failedAt = null;
     if (failedAt === today) {
       setStep("failed");
       return;
@@ -240,8 +154,7 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
         return;
       }
     }
-    // If not locked/failed, mark quiz as in progress
-    localStorage.setItem('daily_quiz_in_progress', today);
+    // If not locked/failed, mark quiz as in progress (backend logic only now)
   }, []);
 
   // If user closes/reloads tab during quiz, mark as failed
@@ -250,10 +163,10 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
     const today = getToday();
     const handleBeforeUnload = () => {
       // Only fail if quiz is in progress and not finished
-      if (localStorage.getItem('daily_quiz_in_progress') === today) {
-        localStorage.setItem('daily_quiz_failed', today);
-        localStorage.removeItem('daily_quiz_in_progress');
-      }
+      // If quiz is in progress and not finished, mark as failed (backend logic only now)
+      // TODO: Implement backend call for marking quiz as failed
+      // Example: await api.markDailyQuizFailed(today)
+      
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -279,11 +192,6 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
       setStep("error");
       return;
     }
-    // If answering last question, clear in-progress/failed flags
-    if (current + 1 === QUIZ_LENGTH) {
-      localStorage.removeItem('daily_quiz_in_progress');
-      localStorage.removeItem('daily_quiz_failed');
-    }
     // Next question
     const next = current + 1;
     if (next < questions.length) {
@@ -292,79 +200,15 @@ export default function DailyQuiz({ onBack }: { onBack: () => void }) {
       setTimer(QUESTION_TIME);
     } else {
       setStep('done');
-      localStorage.setItem(DAILY_QUIZ_KEY, Date.now().toString());
-      localStorage.setItem("daily_quiz_last_completed", Date.now().toString());
-      // Streak logic
-      const streakKey = 'quiz_streak';
-      const lastPlayedKey = 'quiz_streak_last_played';
-      const prevStreak = parseInt(localStorage.getItem(streakKey) || '0', 10);
-      // ...
+      // All quiz completion/locking logic should now be handled by backend/database
     }
   }
 
-  // Check if quiz is already completed or failed today
   useEffect(() => {
-    const today = getToday();
-    const completedAt = localStorage.getItem(DAILY_QUIZ_KEY);
-    const failedAt = localStorage.getItem('daily_quiz_failed');
-    if (failedAt === today) {
-      setStep("failed");
-      return;
-    }
-    if (completedAt) {
-      const now = new Date();
-      const last = new Date(parseInt(completedAt, 10));
-      if (
-        now.getDate() === last.getDate() &&
-        now.getMonth() === last.getMonth() &&
-        now.getFullYear() === last.getFullYear()
-      ) {
-        setStep("locked");
-        return;
-      }
-    }
-    // If not locked/failed, mark quiz as in progress
-    localStorage.setItem('daily_quiz_in_progress', today);
+    setStep("quiz");
   }, []);
 
-  // If user closes/reloads tab during quiz, mark as failed
-  useEffect(() => {
-    if (step !== "quiz") return;
-    const today = getToday();
-    const handleBeforeUnload = () => {
-      // Only fail if quiz is in progress and not finished
-      if (localStorage.getItem('daily_quiz_in_progress') === today) {
-        localStorage.setItem('daily_quiz_failed', today);
-        localStorage.removeItem('daily_quiz_in_progress');
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [step]);
 
-  // When component is first mounted, try to lock API fetching
-  useEffect(() => {
-    // Add an event listener to detect when other tabs fetch new questions
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === GLOBAL_CACHE_KEY || e.key?.startsWith('daily_quiz_questions_')) {
-        // Another tab may have fetched new questions, check again
-        loadQuestions();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    
-    const timeout = setTimeout(() => {
-      setLoading(false);
-      setError(true);
-    }, 4000);
-    
-    loadQuestions().then(() => clearTimeout(timeout));
-    
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
 
   // Main component return
   return (

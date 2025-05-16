@@ -5,11 +5,12 @@ import {
   useAddFrame,
 } from "@coinbase/onchainkit/minikit";
 
+// ig
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Home, Features } from "./components/DemoComponents";
 import Leaderboard from "./components/Leaderboard";
 import { Icon, Button } from "./components/DemoComponents";
-import DailyQuiz, { getStreak } from "./components/DailyQuiz";
+import DailyQuiz from "./components/DailyQuiz";
 import QuizCreator from "./components/QuizCreator";
 import MyQuizzes from "./components/MyQuizzes";
 import { sdk } from '@farcaster/frame-sdk';
@@ -30,6 +31,11 @@ export default function App() {
     }
   }, [setFrameReady, isFrameReady]);
 
+  // Farcaster Frame SDK: signal ready as soon as UI is ready
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
+
   useEffect(() => {
     async function getUserFID() {
       try {
@@ -46,9 +52,6 @@ export default function App() {
     getUserFID();
   }, []);
 
-  useEffect(() => {
-    setStreak(getStreak());
-  }, [activeTab]);
 
   const handleAddFrame = useCallback(async () => {
     const frameAdded = await addFrame();
