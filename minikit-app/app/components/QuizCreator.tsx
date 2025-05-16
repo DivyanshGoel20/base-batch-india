@@ -126,9 +126,6 @@ export default function QuizCreator({ onBack, userFid }: QuizCreatorProps) {
   function isValidQuestion(q: CreateQuestion) {
     return q.text && q.options.every(o => o) && q.answer !== null && (q.type === "text" || q.media);
   }
-  // Form step
-  const [musicMuted, setMusicMuted] = useState(false);
-const musicUrl = "https://cdn.pixabay.com/audio/2022/10/16/audio_12b7f3b7e5.mp3"; // Royalty-free upbeat background music
 
 if (step === "form") {
     const q = questions[current];
@@ -145,16 +142,7 @@ if (step === "form") {
             100% { background-position: 0% 50%; }
           }
         `}</style>
-        <audio src={musicUrl} autoPlay loop hidden={!musicMuted} muted={musicMuted} />
         <Card title={<div className="flex items-center justify-between w-full">
-          <span>Create a Quiz</span>
-          <button
-            onClick={() => setMusicMuted(m => !m)}
-            className={`ml-2 px-2 py-1 rounded text-xs font-semibold ${musicMuted ? 'bg-gray-200 text-gray-600' : 'bg-pink-200 text-pink-800'} transition-all`}
-            aria-label={musicMuted ? 'Unmute music' : 'Mute music'}
-          >
-            {musicMuted ? '🔇 Music Off' : '🎵 Music On'}
-          </button>
         </div>}>
 
         <Button variant="ghost" onClick={onBack} className="mb-2">← Back to Home</Button>
