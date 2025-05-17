@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card, Button, Icon } from "./DemoComponents";
 import { useEffect, useRef } from "react";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DAILY_QUIZ_KEY = "daily_quiz_last_completed_at";
 const QUIZ_LENGTH = 5;
 const QUESTION_TIME = 10; // seconds
@@ -30,9 +31,9 @@ function getISTDateString(): string {
 // Fetch daily questions from API or database
 function shuffleArray<T>(array: T[], seed: number): T[] {
   // Seeded shuffle using Fisher-Yates
-  let arr = array.slice();
+  const arr = array.slice();
   let m = arr.length, t: T, i: number;
-  let random = mulberry32(seed);
+  const random = mulberry32(seed);
   while (m) {
     i = Math.floor(random() * m--);
     t = arr[m];
@@ -44,7 +45,7 @@ function shuffleArray<T>(array: T[], seed: number): T[] {
 // Seeded random generator
 function mulberry32(a: number): () => number {
   return function() {
-    var t = a += 0x6D2B79F5;
+    let t = a += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);
     t ^= t + Math.imul(t ^ t >>> 7, t | 61);
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
@@ -203,6 +204,7 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
         (async () => {
           try {
             // Fetch current stats
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { data, error } = await supabase
               .from('daily_quiz_user_stats')
               .select('*')
@@ -258,7 +260,7 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
       {error && <div className="text-center text-red-500">Failed to load questions. <Button onClick={handleRetry}>Retry</Button></div>}
       {!loading && lockedUntil && Date.now() < lockedUntil && (
         <div className="text-center">
-          <div className="mb-2 text-[var(--app-foreground-muted)]">You have already completed today's Daily Quiz!</div>
+          <div className="mb-2 text-[var(--app-foreground-muted)]">{'You have already completed today\'s Daily Quiz!'}</div>
           <div className="mb-2 text-lg">🔥 Current Streak: <span className="font-bold">{streak}</span></div>
           <div className="mb-4 text-sm">Come back in {Math.ceil((lockedUntil - Date.now())/1000/60/60)} hour(s) to play again.</div>
           <Button variant="primary" onClick={onBack}>Back to Home</Button>
