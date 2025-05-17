@@ -146,6 +146,7 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
             }
           }
         }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setStatsError('Failed to load quiz stats');
       }
@@ -231,6 +232,7 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
 ], { onConflict: 'user_fid' });
             setStreak(newStreak);
             setLockedUntil(Date.now() + 24 * 60 * 60 * 1000);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (err) {
             setStatsError('Failed to update quiz stats');
           }
