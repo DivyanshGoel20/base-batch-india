@@ -294,7 +294,7 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
         <div className="text-center">
           <div className="mb-2 text-[var(--app-foreground-muted)]">{'You have already completed today\'s Daily Quiz!'}</div>
           <div className="mb-2 text-lg">🔥 Current Streak: <span className="font-bold">{streak}</span></div>
-          <div className="mb-4 text-sm">Come back in {Math.ceil((lockedUntil - Date.now())/1000/60/60)} hour(s) to play again.</div>
+          <div className="mb-4 text-sm">Come back in {lockedUntil ? Math.ceil((lockedUntil - Date.now())/1000/60/60) : 0} hour(s) to play again.</div>
           <Button variant="primary" onClick={onBack}>Back to Home</Button>
         </div>
       )}
