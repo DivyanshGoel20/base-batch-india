@@ -141,9 +141,12 @@ export function Home({ setActiveTab, streak = 0 }: HomeProps & { streak?: number
 
   return (
     <div className="space-y-6 animate-fadein">
-      {/* App Name & Music Toggle */}
+      {/* App Logo, Name & Music Toggle */}
       <div className="flex justify-between items-center mb-4">
-        <span className="font-bold text-3xl text-[var(--app-accent)] tracking-tight">WarpQuiz</span>
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="WarpQuiz Logo" className="h-10 w-10 rounded-full border border-[var(--app-accent)] bg-white" />
+          <span className="font-bold text-3xl text-[var(--app-accent)] tracking-tight">WarpQuiz</span>
+        </div>
         <button
           onClick={() => setMusicMuted((m: boolean) => !m)}
           className={`px-3 py-1 rounded text-xs font-semibold border border-[var(--app-accent)] ml-2 transition-all ${musicMuted ? 'bg-white text-[var(--app-accent)]' : 'bg-[var(--app-accent)] text-white'}`}
