@@ -42,6 +42,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta
+          name="fc:frame"
+          content={JSON.stringify({
+            version: "next",
+            imageUrl: process.env.NEXT_PUBLIC_APP_HERO_IMAGE,
+            button: {
+              title: `Launch ${process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME}`,
+              action: {
+                type: "launch_frame",
+                name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
+                url: process.env.NEXT_PUBLIC_URL,
+                splashImageUrl: process.env.NEXT_PUBLIC_SPLASH_IMAGE,
+                splashBackgroundColor: process.env.NEXT_PUBLIC_SPLASH_BACKGROUND_COLOR,
+              },
+            },
+          })}
+        />
+      </head>
       <body className="bg-background">
         <Providers>{children}</Providers>
       </body>
