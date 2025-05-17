@@ -183,6 +183,11 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
   }, [step, timer, questions]);
 
   function handleAnswer(selectedIdx: number | null) {
+    // Prevent answering if locked
+    if (lockedUntil && Date.now() < lockedUntil) {
+      setStep("locked");
+      return;
+    }
     if (!questions || !Array.isArray(questions) || questions.length === 0 || current < 0 || current >= questions.length) {
       setStep("error");
       return;
@@ -198,19 +203,22 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
         setSelected(null);
         setTimer(QUESTION_TIME);
       } else {
-        setStep('done');
+        // After finishing, lock immediately and show only lock message
+        setStep('locked');
         setSelected(null);
         setTimer(0);
         // Lock quiz for 24 hours and update streak in Supabase
         (async () => {
           try {
             // Fetch current stats
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { data, error } = await supabase
               .from('daily_quiz_user_stats')
               .select('*')
               .eq('user_fid', userFid)
               .single();
+            if (error) {
+              console.error('Supabase fetch error:', error);
+            }
             let newStreak = 1;
             const now = new Date();
             if (data) {
@@ -223,17 +231,39 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
               }
             }
             // Upsert
-            await supabase.from('daily_quiz_user_stats').upsert([
-  {
-    user_fid: userFid,
-    last_completed_at: now.toISOString(),
-    streak: newStreak,
-  }
-], { onConflict: 'user_fid' });
-            setStreak(newStreak);
-            setLockedUntil(Date.now() + 24 * 60 * 60 * 1000);
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const upsertResp = await supabase.from('daily_quiz_user_stats').upsert([
+              {
+                user_fid: userFid,
+                last_completed_at: now.toISOString(),
+                streak: newStreak,
+              }
+            ], { onConflict: 'user_fid' });
+            if (upsertResp.error) {
+              console.error('Supabase upsert error:', upsertResp.error);
+              setStatsError('Failed to update quiz stats');
+            } else if (!upsertResp.data) {
+              console.warn('Supabase upsert returned no data');
+            }
+            // Re-fetch stats to ensure lock is set correctly
+            const { data: newStats, error: fetchErr } = await supabase
+              .from('daily_quiz_user_stats')
+              .select('*')
+              .eq('user_fid', userFid)
+              .single();
+            if (fetchErr) {
+              console.error('Supabase re-fetch error:', fetchErr);
+            }
+            if (newStats) {
+              setStreak(newStats.streak || newStreak);
+              if (newStats.last_completed_at) {
+                const last = new Date(newStats.last_completed_at).getTime();
+                setLockedUntil(last + 24 * 60 * 60 * 1000);
+              }
+            } else {
+              setLockedUntil(Date.now() + 24 * 60 * 60 * 1000);
+            }
           } catch (err) {
+            console.error('Exception in upsert:', err);
             setStatsError('Failed to update quiz stats');
           }
         })();
@@ -260,7 +290,7 @@ export default function DailyQuiz({ onBack, userFid }: DailyQuizProps) {
       {statsError && <div className="text-center text-red-500">{statsError}</div>}
       {loading && <div className="text-center text-[var(--app-foreground-muted)]">Loading...</div>}
       {error && <div className="text-center text-red-500">Failed to load questions. <Button onClick={handleRetry}>Retry</Button></div>}
-      {!loading && lockedUntil && Date.now() < lockedUntil && (
+      {!loading && (step === "locked" || (lockedUntil && Date.now() < lockedUntil)) && (
         <div className="text-center">
           <div className="mb-2 text-[var(--app-foreground-muted)]">{'You have already completed today\'s Daily Quiz!'}</div>
           <div className="mb-2 text-lg">🔥 Current Streak: <span className="font-bold">{streak}</span></div>
